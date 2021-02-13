@@ -1,0 +1,133 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+
+\begin{document}
+
+\section{Développement de la fonction objective}
+La première étape est d'exprimer la fonction objective présenté dans l'article de
+XXX sous une forme indépendante de la variables $X$.
+
+Pour ce faire, $x_1$ est considéré comme une condition initiale et les $x$ 
+subséquents sont exprimés comme fonction de $x_1$ et $U_g$ qui sont respectivement
+les conditions initiales et une concaténation des vecteurs $u_1$ à $u_{n-1}$.
+
+\begin{align*}
+    x_{k+1} &= x_k + h\dot{x_k}                         \\
+    x_{k+1} &= x_k + h(Ax_k+Bu_k)                       \\
+                                                        \\
+    x_1 &= x_1                                          \\
+    x_2 &= x_1 +h(Ax_1+Bu_1)                            \\
+    x_3 &= x_2 +h(Ax_2+Bu_2)                            \\
+        &= x_1(1+2hA+h^2A^2)+u_1(h^2AB+hB)+u_2(hB)      \\
+        &\dots                                          \\ 
+\end{align*}
+
+On peut obtenir ainsi reconstruire le vecteur $X_g$ comme une fonction de $U_g$.
+
+\begin{align*}
+    X_g =&  
+        \begin{bmatrix}
+            x_2 \\ x_3 \\ \vdots \\ x_{n-1} \\ x_n 
+        \end{bmatrix}                                                       \\
+    =& 
+        \begin{bmatrix}
+            1       & hA    & 0         & 0                 & \dots         \\ 
+            1       & 2hA   & h^2A^2    & 0                 &               \\ 
+            1       & 3hA   & 3h^2A^2   & A^3h^3            &               \\
+            \vdots  &       &           &                   & \ddots        \\
+        \end{bmatrix}
+        \begin{bmatrix}
+            x_1 \\ x_1 \\ \vdots \\ x_1                                     \\
+        \end{bmatrix}
+        +                                                                   \\
+    &
+        \begin{bmatrix}
+            hB                      & 0         & 0     &\dots              \\ 
+            h^2AB+hB                & hB        & 0     &                   \\ 
+            h^3A^2B + 2h^2AB + hB   & h^2AB+hB  & hB    &                   \\
+            \vdots                  &           &       & \ddots                                                                                       
+        \end{bmatrix}
+        \begin{bmatrix}
+            u_1 \\ u_2 \\ \vdots \\ u_{n-1}                      
+        \end{bmatrix}                                                       \\
+    =& D+EU_g
+\end{align*}
+
+Les matrices $R$, $Q$ et et $r$ doivent également être reformulé pour le problème
+global. $r_g$ est une concaténation des vecteurs $r_2$ à $r_{n}$. $Q_g$ est une 
+matrice diagonale dont sa diagonale est constiuée de matrices $Q$. $R_g$ est une 
+matrice diagonale dont sa diagonale est constiuée de matrices $R$.
+
+
+On peut ensuite substituer les nouvelles formulations globales dans la fonction objective
+du problème de commande discrète pour trouver la formulation du problème sous
+forme quadratique avec $U_g$ comme variable à optimiser. 
+Les termes constants ne sont inclus dans le développement qui suit puisqu'il 
+n'influencent pas le problème d'optimisation.
+
+\begin{align*}
+    J_g &= \frac{1}{2}\Big[ (C_dX_g-r_g)^TQ_g(C_dX_g-r_g)+U_g^TR_gU_g  \Big]                  \\
+    &= 
+        \frac{1}{2}\Big[ 
+            (IX_g-r_g)^TQ_g(IX_g-r_g)+U_g^TR_gU_g  
+        \Big]                                                               \\
+    &= 
+        \frac{1}{2}\Big[ 
+            (D^T+U_g^T+E^T-r_g)^T(Q_gD+Q_gEU_g-Q_gr_g)+U_g^TR_gU_g  
+        \Big]                                                               \\
+    % &= 
+    %     \frac{1}{2}\Big[ 
+    %         D^TQ_gEU_g + U_g^TE^TQ_gD + U_g^TE^TQ_gEU_g - U_g^TE^TQ_gEU_g - U_g^TE^TQ_gr_g - r_g^TQ_gEU_g + U_g^TR_gU_g 
+    %     \Big]                                                               \\
+    % &= 
+    %     \frac{1}{2}\Big[ 
+    %         U_g^T(E^TQ_gD - E^TQ_gr_g) + (D^TQ_gE - r_g^TQ_gE)U_g + U_g^T(E^TQ_gE+R_g)U_g 
+    %     \Big]                                                               \\
+    % &= 
+    %     \frac{1}{2}\Big[ 
+    %         (E^TQ_gD - E^TQ_gr_g)^TU_g + (D^TQ_gE - r_g^TQ_gE)U_g + U_g^T(E^TQ_gE+R_g)U_g 
+    %     \Big]                                                               \\
+    % &= 
+    %     \frac{1}{2}\Big[ 
+    %         (D^TQ_gE - r_g^TQ_gE + D^TQ_gE - r_g^TQ_gE)U_g + U_g^T(E^TQ_gE+R_g)U_g 
+    %     \Big]                                                               \\
+    % &= 
+    %     \frac{1}{2}\Big[ 
+    %         (2D^TQ_gE - 2r_g^TQ_gE)U_g + U_g^T(E^TQ_gE+R_g)U_g 
+    %     \Big]                                                               \\
+    % &= (D^TQ_gE - r_g^TQ_gE)U_g + \frac{1}{2}U_g^T(E^TQ_gE+R_g)U_g                          \\
+    &= (E^TQ_gD - E^TQ_gr_g)^TU_g + \frac{1}{2}U_g^T(E^TQ_gE+R_g)U_g                        \\
+\end{align*}
+
+\subsection{Prochaines étapes}
+    \subsubsection{Expression des matrices $D$ et $E$}
+        Les matrices $D$ et $E$ doivent pouvoir être construite programmatiquement
+        pour n'importe quelle taille de problème. La méthode actuelle de substitution
+        avec le solveur symbolique Sympy n'est donc pas convenable.
+
+        Il est donc nécessaire d'exprimer $D$ et $E$ comme une expression algébrique
+        matricielle pour n'importe quel nombre de pas de temps $n$.
+
+    \subsubsection{Résolution avec IPOPT}
+        Une fois l'équation $J_g$ modelisée, le système peut être résolu pour les
+        cas présentés dans l'article à l'aide d'IPOPT sans traitement additionnel.
+
+        Comparer les résultats avec ceux de l'article va permettre de vérifier
+        le modèle.
+
+    \subsubsection{Résolution par une méthode adaptée}
+        Pour sélectionner la meilleure méthode a utilisé pour la résolution du 
+        système. Il est nécessaire de définir si la matrice $E^TQ_gE+R_g$ est 
+        symétrique et défini positive.
+        
+        Si oui, une méthode quasi-Newton BFGS avec une recherche linéaire exacte 
+        assurerait une convergence en 4$n$ itérations.
+        
+        Sinon, une méthode quasi-Newton BFGS avec une recherche linéaire d'armijo
+        pourrait être implémentée. 
+        
+        Les mêmes cas devront être réévalués avec cette méthode pour Comparer
+        les résultats et la performance de l'algorithme. Des solutions semblables
+        à IPOPT sont attendu avec une meilleure performance.
+    
+\end{document}
