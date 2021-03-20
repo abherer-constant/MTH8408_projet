@@ -3,19 +3,25 @@
 
 \begin{document}
 
-\newcommand{\U}[1]{U_{5\times1(#1)}}
+\newcommand{\U}[1]{U_{4\times1(#1)}}
 \newcommand{\X}[1]{X_{12\times1(#1)}}
 \newcommand{\I}[1]{I_{#1\times #1}}
-\newcommand{\B}{B_{12\times 5}}
+\newcommand{\B}{B_{12\times 4}}
 \newcommand{\A}{A_{12\times 12}}
 \newcommand{\g}[1]{g_{12\times 1 (#1)}}
 
+\paragraph{Variable}
 \begin{align*}
-    X       & =
+    X & =
     \begin{bmatrix}
         \U{1} \\ \X{2} \\ \U{2} \\ \X{3} \\ \vdots
-    \end{bmatrix}                          \\
-    A_{aao} & =
+    \end{bmatrix}
+\end{align*}
+
+\paragraph{Contraintes}
+
+\begin{align*}                        \\
+    A_{aao}                     & =
     \begin{bmatrix}
         0  & 0  & 0  & 0  & 0  & 0 \\
         \B & 0  & 0  & 0  & 0  & 0 \\
@@ -23,26 +29,36 @@
         0  & \A & \B & 0  & 0  & 0 \\
         0  & 0  & 0  & 0  & 0  & 0 \\
         0  & 0  & 0  & \A & \B & 0
-    \end{bmatrix}                          \\
-    D_{aao} & =
+    \end{bmatrix}                                                                \\
+    D_{aao}                     & =
     \begin{bmatrix}
         0 \\ \A \X{1}     \\ 0     \\ 0     \\ 0     \\ 0  \\ \vdots   \\
-    \end{bmatrix}                          \\
-    E_{aao} & =
+    \end{bmatrix}                                                                \\
+    E_{aao}                     & =
     \begin{bmatrix}
-        \I{5} & 0 & 0     & 0 & 0     & 0 \\
+        \I{4} & 0 & 0     & 0 & 0     & 0 \\
         0     & 0 & 0     & 0 & 0     & 0 \\
-        0     & 0 & \I{5} & 0 & 0     & 0 \\
+        0     & 0 & \I{4} & 0 & 0     & 0 \\
         0     & 1 & 0     & 0 & 0     & 0 \\
-        0     & 0 & 0     & 0 & \I{5} & 0 \\
+        0     & 0 & 0     & 0 & \I{4} & 0 \\
         0     & 0 & 0     & 1 & 0     & 0
-    \end{bmatrix}                          \\
-    F_{aao} & =
+    \end{bmatrix}                                                                \\
+    F_{aao}                     & =
     \begin{bmatrix}
         0 \\ \X{1}     \\ 0     \\ 0     \\ 0     \\ 0   \\ \vdots
-    \end{bmatrix}                          \\
-    X       & = h(A_{aao}X+D_{aao})+E_{aao}X + F_{aao}
+    \end{bmatrix}                                                                \\
+    F_{aao}                     & =
+    \begin{bmatrix}
+        0_{15 \times 1} \\ -g     \\ 0_{15 \times 1}     \\ -g     \\ \vdots
+    \end{bmatrix}                                                                \\
+    X                           & = h(A_{aao}X+D_{aao}+G_{aao})+E_{aao}X + F_{aao}           \\
+    X                           & = h A_{aao} X+ h D_{aao} + h G_{aao} + E_{aao} X + F_{aao} \\
+    X - h A_{aao} X - E_{aao} X & = h D_{aao} + h G_{aao} + F_{aao}                          \\
+    (I- h A_{aao} - E_{aao} ) X & = h D_{aao} + h G_{aao} + F_{aao}                          \\
 \end{align*}
+
+
+\paragraph{Fonction objective}
 
 \begin{align*}
     J       & = -g_{aao}X+\frac{1}{2}X^T H_{aao}X \\

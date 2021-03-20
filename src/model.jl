@@ -16,7 +16,7 @@ Kt = Diagonal([0.1, 0.1, 0.1])
 
 # number of variables in a single time step
 nx = 12
-nu = 5
+nu = 4
 
 # state variable indexes
 ϕi      = 1
@@ -46,10 +46,12 @@ end
 """
 Solve the system step at the next timestep
 
-Parameters
-U  : array of input variables
-x0 : system state at previous timestep
-h  : timestep length
+Parameters[1. 0. 1.
+    #     0. 2. 1.]
+    # b = [0.; 3]
+    # l = [0.;0;0]
+    # u = [Inf; Inf; Inf]
+    # QM = Qup length
 """
 function NonLinearOutput(U, x0, h)
     LEB = getLEB(x0[[ϕi, θi, ψi]])
@@ -70,7 +72,7 @@ function buildLinearSystem()
     LEB = getLEB([0,0,0])
 
     n = nx      # number of state variables
-    r = nu      # number of inputs -> U1, U2, U3, U4, U5=1
+    r = nu      # number of inputs -> U1, U2, U3, U4
     o = 12      # number of outputs -> x, y, z
 
     A = zeros(n, n)
@@ -92,9 +94,8 @@ function buildLinearSystem()
     A[dyi, ϕi] = -g 
 
     B[[dxi,dyi,dzi],1] = (LEB / m * [0,0,1]) 
-    B[dzi,5] = -g
+    # B[dzi,nu] = -g
     B[[dϕi,dθi,dψi], [2,3,4]] = Diagonal([d / Ix, d / Iy, Iz])
-
     C = 1 * Matrix(I, 12, 12)
     return A, B, C
 end
@@ -173,6 +174,11 @@ function make_linear_trajectory(points::Array{Array{Float64,1},1},
     end
     r[n] = zeros(nx)
     r[n][[xi,yi,zi]] = last(points)
+
+    # # add gravity
+    # for state in r
+    #     state[dzi] += g
+    # end
 
     return trajectory(dt, r, n)
 end

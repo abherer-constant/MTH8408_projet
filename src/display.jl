@@ -17,7 +17,7 @@ function plot_trajectory(t_last, traj_sim, traj_planned; savePath="")
 
     
     plt = plot(px, py, pz, layout=l)
-
+    plot!(plt, size=(600, 800))
 
     if (savePath != "")
         savefig("myplot.png")
