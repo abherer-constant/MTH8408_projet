@@ -1,6 +1,17 @@
 ```julia
+using Pkg
+Pkg.activate(".")
+Pkg.instantiate()
 include("src/AllAtOnce.jl")
 ```
+
+    ┌ Info: Precompiling JuMP [4076af6c-e467-56ae-b986-b466b2749572]
+    └ @ Base loading.jl:1260
+    ┌ Info: Precompiling Ipopt [b6b21f68-93f8-5de0-b562-5493be1d77c9]
+    └ @ Base loading.jl:1260
+    ┌ Info: Precompiling Plots [91a5bcdd-55d7-5caf-9e0b-520d859cae80]
+    └ @ Base loading.jl:1260
+
 
 
 
@@ -83,8 +94,8 @@ all_at_once_ipopt(traj)
     Number of equality constraint Jacobian evaluations   = 1
     Number of inequality constraint Jacobian evaluations = 0
     Number of Lagrangian Hessian evaluations             = 1
-    Total CPU secs in IPOPT (w/o function evaluations)   =      9.675
-    Total CPU secs in NLP function evaluations           =      0.463
+    Total CPU secs in IPOPT (w/o function evaluations)   =      9.270
+    Total CPU secs in NLP function evaluations           =      0.447
     
     EXIT: Optimal Solution Found.
 
@@ -154,8 +165,13 @@ all_at_once_ipopt(traj)
     Number of equality constraint Jacobian evaluations   = 1
     Number of inequality constraint Jacobian evaluations = 0
     Number of Lagrangian Hessian evaluations             = 1
-    Total CPU secs in IPOPT (w/o function evaluations)   =     10.873
-    Total CPU secs in NLP function evaluations           =      0.018
+    Total CPU secs in IPOPT (w/o function evaluations)   =     10.574
+    Total CPU secs in NLP function evaluations           =      0.012
     
     EXIT: Optimal Solution Found.
 
+
+
+```julia
+
+```
