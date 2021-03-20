@@ -5,8 +5,8 @@ using MathOptInterface
 using SparseArrays
 using Plots
 
-include("dynamics.jl")
-
+include("model.jl")
+include("display.jl")
 
 
 """
@@ -83,18 +83,26 @@ end
 
 function main()
     # trajectoire stationnaire
-    n = 100
-    pts = [[0.,0.,1.],[1.,0.,1.]]
-    t = [0.,5.]
+    n = 1000
+    pts = [[0.,0.,1.],
+           [1.,0.5,1.],
+           [0.,0.,1.],
+           [0.,0,1.]]
+    t = [0.,50.,100.,110.]
 
     traj = make_linear_trajectory(pts, t, n)
+    all_at_once_ipopt(traj)
+end    
+
+function all_at_once_ipopt(traj) 
+    n = traj.n
     h = traj.dt
-    println("Target trajectory")
-    println(traj)
+    # println("Target trajectory")
+    # println(traj)
     g, H, A_aao, D_aao, E_aao, F_aao = build_allAtOnce_system(traj)
     A, B, C = buildLinearSystem()
 
-    model = Model(with_optimizer(Ipopt.Optimizer))
+    model = Model(Ipopt.Optimizer)
     @variable(model, s[1:(n - 1) * (nx + nu)])
 
     x_id = []
@@ -107,9 +115,11 @@ function main()
     
     for i in 1:(n - 1) * (nx + nu)
         if in(i, x_id)
+            # dynamic system constraints
             @constraint(model, s[i] == h * (dot(A_aao[i,:], s) + D_aao[i]) + dot(E_aao[i,:], s) + F_aao[i])
         end
     end
+    # gravity is imposed by fixing a fifth control variable to 1
     @constraint(model, u5[i=1:(n - 1)], s[(i - 1) * (nx + nu) + nu] == 1)
 
     @objective(model, Min, -dot(g, s) + 0.5 * s' * H * s)
@@ -117,19 +127,5 @@ function main()
 
     traj_sim, traj_opt = sol_2_trajectory(traj.r[1], value.(s), h)
 
-    println("Optimized trajectory")
-    println(traj_opt)
-
-    println("simluated trajectory with non linear dynamics")
-    println(traj_sim)
-
-    t = 0:traj.dt:(traj.dt * n)
-    n = traj.n
-
-    px = scatter(t, [traj.r[i][xi] for i in 1:n], label="target")
-    scatter!(t, [traj_sim.r[i][xi] for i in 1:n], label="simulated")
-    xlabel!("time [s]")
-    ylabel!("x [m]")
-    savefig("myplot.png")
+    plot_trajectory(h * n, traj_sim, traj)
 end
-main()
