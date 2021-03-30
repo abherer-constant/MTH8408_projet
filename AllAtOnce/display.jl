@@ -6,8 +6,8 @@ function plot_trajectory(t_last, traj_sim, traj_planned; savePath="")
     l = @layout [a ; b; c]
 
 
-    px = plot(t, [traj_planned.r[i][xi] for i in 1:n], label="target", ylabel="x [m]")
-    plot!(t, [traj_sim.r[i][xi] for i in 1:n], label="simulated")
+    px = plot(t, [traj_planned.r[i][xi] for i in 1:n], label="cible", ylabel="x [m]")
+    plot!(t, [traj_sim.r[i][xi] for i in 1:n], label="simulation")
 
     py = plot(t, [traj_planned.r[i][yi] for i in 1:n], legend=false, ylabel="y [m]")
     plot!(t, [traj_sim.r[i][yi] for i in 1:n])
@@ -20,7 +20,7 @@ function plot_trajectory(t_last, traj_sim, traj_planned; savePath="")
     plot!(plt, size=(600, 800))
 
     if (savePath != "")
-        savefig("myplot.png")
+        savefig(savePath * ".png")
     else
         display(plt)
     end

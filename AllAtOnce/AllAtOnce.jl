@@ -85,7 +85,7 @@ function build_allAtOnce_system(traj::trajectory)
     return g_vec, H, A_aao, D_aao, E_aao, F_aao, G_aao
 end  
 
-function all_at_once_ipopt(traj) 
+function all_at_once_ipopt(traj; savePath="") 
     n = traj.n
     h = traj.dt
 
@@ -104,27 +104,28 @@ function all_at_once_ipopt(traj)
     # @constraint(model, con[i=x_id], s[i] == h * (dot(A_aao[i,:], s) + D_aao[i]) + dot(E_aao[i,:], s) + F_aao[i])
     
     for i in 1:(n - 1) * (nx + nu)
-        if in(i, x_id)
-            # dynamic system constraints
-            @constraint(model, s[i] == h * (dot(A_aao[i,:], s) + D_aao[i] + G_aao[i]) + dot(E_aao[i,:], s) + F_aao[i])
-        else
-            # commands must always be positive
-            # @constraint(model, s[i] >= 0)
-        end
+        @constraint(model, s[i] == h * (dot(A_aao[i,:], s) + D_aao[i] + G_aao[i]) + dot(E_aao[i,:], s) + F_aao[i])
+        # if in(i, x_id)
+        #     # dynamic system constraints
+        #     @constraint(model, s[i] == h * (dot(A_aao[i,:], s) + D_aao[i] + G_aao[i]) + dot(E_aao[i,:], s) + F_aao[i])
+        # else
+        #     # commands must always be positive
+        #     # @constraint(model, s[i] >= 0)
+        # end
 
-        if i % (nu + dϕi) == 0 || i % (nu + dθi) == 0 || i % (nu + dψi) == 0
-            @constraint(model, deg2rad(20) >= s[i] >= deg2rad(-20))
-        end
+        # if i % (nu + dϕi) == 0 || i % (nu + dθi) == 0 || i % (nu + dψi) == 0
+        #     # @constraint(model, deg2rad(20) >= s[i] >= deg2rad(-20))
+        # end
     end
 
     @objective(model, Min, -dot(g_vec, s) + 0.5 * s' * H * s)
     JuMP.optimize!(model)
     traj_sim, traj_opt = sol_2_trajectory(traj.r[1], value.(s), h)
 
-    plot_trajectory(h * n, traj_sim, traj)
+    plot_trajectory(h * n, traj_sim, traj, savePath=savePath)
 end
 
-function all_at_once_RipQP(traj) 
+function all_at_once_RipQP(traj; savePath="") 
     n = traj.n
     h = traj.dt
     g_vec, H, A_aao, D_aao, E_aao, F_aao, G_aao = build_allAtOnce_system(traj)
@@ -137,5 +138,5 @@ function all_at_once_RipQP(traj)
     
     stats = ripqp(QM, display=false)
     traj_sim, traj_opt = sol_2_trajectory(traj.r[1], stats.solution, h)
-    plot_trajectory(h * n, traj_sim, traj)
+    plot_trajectory(h * n, traj_sim, traj, savePath=savePath)
 end
