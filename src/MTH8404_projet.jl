@@ -31,7 +31,7 @@ module post_processing
 
 using Revise
 
-export plot_trajectory, plot_u1, solve_L2_error
+export plot_trajectory, plot_u1, solve_L2_error, plot_disturbance
 
 includet("display.jl")
 
@@ -41,7 +41,7 @@ module problems
 
 using Revise
 
-export drone_trajectories
+export drone_trajectories, generate_disturbance
 
 includet("problems.jl")
 

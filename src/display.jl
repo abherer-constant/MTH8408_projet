@@ -98,3 +98,21 @@ function solve_L2_error(trajectories::Dict{String,trajectory}, target_traj::traj
     
     return plt, errors
 end
+
+
+function plot_disturbance(disturbance, dt)
+    
+    disturbance = vcat([0 0 0], disturbance) # add initial condition
+    n = size(disturbance, 1)
+    t = range(0, dt * n; length=n)
+    
+    px = plot(t, vec(disturbance[:,1]), ylabel="perturbation\nx [N]", label="")
+    py = plot(t, vec(disturbance[:,2]), ylabel="perturbation\ny [N]", legend=false, label="")
+    pz = plot(t, vec(disturbance[:,3]), ylabel="perturbation\nz [N]", xlabel="temps [s]", legend=false, label="")
+
+    l = @layout [a ; b; c]
+    plt = plot(px, py, pz, layout=l)
+    plot!(plt, size=(640, 480))
+    
+    return plt
+end

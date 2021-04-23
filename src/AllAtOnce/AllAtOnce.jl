@@ -14,11 +14,16 @@ using ..model
 """
 Create all the matrices for the all at once formulation
 """
-function build_allAtOnce_system(traj::trajectory)
+function build_allAtOnce_system(traj::trajectory; disturbance=nothing)
+
     h = traj.dt
     r::Array{Array{Float64,1},1} = traj.r
     n = length(r)
     n_tot = (n - 1) * (nx + nu) # x1 vector is the initial condition
+
+    if disturbance === nothing
+        disturbance = zeros(n_tot - 1, 3)
+    end
 
     A, B, C = buildLinearSystem()
     Q = Diagonal([100,50,10,5,0,0,100,1,100,1,1000,0.1])
@@ -77,9 +82,11 @@ function build_allAtOnce_system(traj::trajectory)
         E_aao[rows,cols] = Diagonal(ones(nx))
     end
 
-    # populate G_aao vector, used to include gravity
+    # populate G_aao vector, used to include gravity and disturbance
     for i in 1:(n - 1)
-        G_aao[(i) * (nu + nx)] = -g
+        G_aao[(i) * (nu + nx)] = -g + disturbance[i,3] / m
+        G_aao[(i) * (nu + nx) - 2] = disturbance[i,2] / m
+        G_aao[(i) * (nu + nx) - 4] = disturbance[i,1] / m
     end
 
     return g_vec, H, A_aao, D_aao, E_aao, F_aao, G_aao
@@ -100,11 +107,11 @@ function gen_sol(sol)
     return vcat(x, u)
 end
 
-function all_at_once_ipopt(traj) 
+function all_at_once_ipopt(traj; disturbance=nothing) 
     n = traj.n
     h = traj.dt
 
-    g_vec, H, A_aao, D_aao, E_aao, F_aao, G_aao = build_allAtOnce_system(traj)
+    g_vec, H, A_aao, D_aao, E_aao, F_aao, G_aao = build_allAtOnce_system(traj, disturbance=disturbance)
     A, B, C = buildLinearSystem()
 
     model = Model(Ipopt.Optimizer)
@@ -130,10 +137,10 @@ function all_at_once_ipopt(traj)
     return stats
 end
 
-function all_at_once_RipQP(traj) 
+function all_at_once_RipQP(traj; disturbance=nothing) 
     n = traj.n
     h = traj.dt
-    g_vec, H, A_aao, D_aao, E_aao, F_aao, G_aao = build_allAtOnce_system(traj)
+    g_vec, H, A_aao, D_aao, E_aao, F_aao, G_aao = build_allAtOnce_system(traj, disturbance=disturbance)
     A, B, C = buildLinearSystem()
 
     A_qm = I - h * A_aao - E_aao   
