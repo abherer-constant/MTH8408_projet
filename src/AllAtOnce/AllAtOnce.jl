@@ -6,10 +6,10 @@ using SparseArrays
 using Plots
 using RipQP
 using QuadraticModels
-
-include("model.jl")
-include("display.jl")
-
+using SolverCore
+using NLPModelsJuMP
+using NLPModelsIpopt
+using ..model
 
 """
 Create all the matrices for the all at once formulation
@@ -85,7 +85,22 @@ function build_allAtOnce_system(traj::trajectory)
     return g_vec, H, A_aao, D_aao, E_aao, F_aao, G_aao
 end  
 
-function all_at_once_ipopt(traj; savePath="") 
+
+"""
+Transform a solution array from [u1 x2 u2 x2 ...] to [x2 x3 x4 ... u1 u2 u3]
+"""
+function gen_sol(sol)
+    n = length(sol)
+    x = []
+    u = []
+    for i in 1:(nx + nu):n
+        x = vcat(x, sol[i + nu:i + nu + nx - 1])
+        u = vcat(u, sol[i:i + nu - 1])
+    end
+    return vcat(x, u)
+end
+
+function all_at_once_ipopt(traj) 
     n = traj.n
     h = traj.dt
 
@@ -100,32 +115,22 @@ function all_at_once_ipopt(traj; savePath="")
         id = collect(1:nx) .+ nu .+ (i - 1) * (nx + nu)
         append!(x_id, id)
     end
-
-    # @constraint(model, con[i=x_id], s[i] == h * (dot(A_aao[i,:], s) + D_aao[i]) + dot(E_aao[i,:], s) + F_aao[i])
-    
+  
     for i in 1:(n - 1) * (nx + nu)
         @constraint(model, s[i] == h * (dot(A_aao[i,:], s) + D_aao[i] + G_aao[i]) + dot(E_aao[i,:], s) + F_aao[i])
-        # if in(i, x_id)
-        #     # dynamic system constraints
-        #     @constraint(model, s[i] == h * (dot(A_aao[i,:], s) + D_aao[i] + G_aao[i]) + dot(E_aao[i,:], s) + F_aao[i])
-        # else
-        #     # commands must always be positive
-        #     # @constraint(model, s[i] >= 0)
-        # end
-
-        # if i % (nu + dϕi) == 0 || i % (nu + dθi) == 0 || i % (nu + dψi) == 0
-        #     # @constraint(model, deg2rad(20) >= s[i] >= deg2rad(-20))
-        # end
     end
 
     @objective(model, Min, -dot(g_vec, s) + 0.5 * s' * H * s)
-    JuMP.optimize!(model)
-    traj_sim, traj_opt = sol_2_trajectory(traj.r[1], value.(s), h)
-
-    plot_trajectory(h * n, traj_sim, traj, savePath=savePath)
+        
+    nlp = MathOptNLPModel(model)
+    stats = ipopt(nlp)
+    stats.solution = gen_sol(stats.solution)
+    stats.solver_specific[:dt] = traj.dt
+    stats.solver_specific[:n] = traj.n 
+    return stats
 end
 
-function all_at_once_RipQP(traj; savePath="") 
+function all_at_once_RipQP(traj) 
     n = traj.n
     h = traj.dt
     g_vec, H, A_aao, D_aao, E_aao, F_aao, G_aao = build_allAtOnce_system(traj)
@@ -137,6 +142,8 @@ function all_at_once_RipQP(traj; savePath="")
     QM = QuadraticModel(-g_vec, H, A=A_qm, lcon=L_qm, ucon=L_qm, name="QM")
     
     stats = ripqp(QM, display=false)
-    traj_sim, traj_opt = sol_2_trajectory(traj.r[1], stats.solution, h)
-    plot_trajectory(h * n, traj_sim, traj, savePath=savePath)
+    stats.solution = gen_sol(stats.solution)
+    stats.solver_specific[:dt] = traj.dt
+    stats.solver_specific[:n] = traj.n 
+    return stats
 end
