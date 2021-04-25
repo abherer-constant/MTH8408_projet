@@ -41,7 +41,7 @@ module problems
 
 using Revise
 
-export drone_trajectories, generate_disturbance
+export generate_problem
 
 includet("problems.jl")
 

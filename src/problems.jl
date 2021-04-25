@@ -1,45 +1,6 @@
 using ..model
 using Distributions
 
-drone_trajectories = Dict{String,trajectory}()
-
-# nombre de points de discrétisation
-n = 1000
-
-# points de la trajectoire et le moment correspondant
-pts = [[0.      ,0.     ,0.],
-    [15.     ,0.     ,0.],
-    [30.     ,0.     ,15.],
-    [30.     ,5.     ,15.],
-    [15.     ,5.     ,0.],
-    [0.      ,5.     ,0.]]
-t = [0.,15.,30.,30.,45.,60.]
-
-drone_trajectories["A_fast"] = make_linear_trajectory(pts, t, n)
-drone_trajectories["A_slow"] = make_linear_trajectory(pts, t * 10, n)
-drone_trajectories["A_sample"] = make_linear_trajectory(pts, t, 50)
-
-
-# trajectoire B de l'article de référence (sinus)
-n = 1000
-pts = [[0., 0., 1.],[80., 80., 1.]]
-t = [0., 60.]
-period = Int(round(20 / 60 * n))
-
-B_traj = make_linear_trajectory(pts, t, n)
-for i in 1:n
-    B_traj.r[i][zi] = 1 + sin(i / period * 2 * π)
-end
-drone_trajectories["B_fast"] = B_traj
-t *= 10
-B_traj = make_linear_trajectory(pts, t, n)
-for i in 1:n
-    B_traj.r[i][zi] = 1 + sin(i / period * 2 * π)
-end
-drone_trajectories["B_slow"] = B_traj
-
-# définition de la matrice perturbation
-
 function generate_disturbance(n::Int)
     n -= 1 # remove disturbance on initial condition
     Amplitude = 5 # N
@@ -63,4 +24,60 @@ function generate_disturbance(n::Int)
     dz[dz_start:dz_end] = rand(d, dz_end - dz_start + 1)
 
     return hcat(dx, dy, dz)
+end
+
+"""
+Generate a problem from one of the templates in the reference paper
+
+traj_ID: A or B, the trajectory identifier from the reference paper
+n: approximate number of discretisation points
+disturbed: add the disturbance described in the reference paper to the trajectory
+time_multiplier: multiplier for the total trajectory time. Having a time_multiplier of 2 reduces the velocity by a factor of 2
+"""
+function generate_problem(traj_ID::String; n::Int=1000, disturbed::Bool=false, time_multiplier::Real=1.)
+
+    if disturbed
+        dist = generate_disturbance(n)
+    else
+        dist = zeros(n, 3)
+    end
+    
+    if traj_ID == "A"
+        traj = generate_A(n, time_multiplier, dist)
+    elseif traj_ID == "B"
+        traj = generate_B(n, time_multiplier, dist)
+    end
+
+
+
+    return traj
+end
+
+"""
+Generate the trajectory A from the reference paper
+"""
+function generate_A(n::Int, time_multiplier::Real, dist)
+    pts = [[0.      ,0.     ,0.],
+            [15.     ,0.     ,0.],
+            [30.     ,0.     ,15.],
+            [30.     ,5.     ,15.],
+            [15.     ,5.     ,0.],
+            [0.      ,5.     ,0.]]
+    t = [0.,15.,30.,30.,45.,60.] * time_multiplier
+    return make_linear_trajectory(pts, t, n, disturbance=dist)
+end
+
+"""
+Generate the trajectory B from the reference paper
+"""
+function generate_B(n::Int, time_multiplier::Real, dist)
+    pts = [[0., 0., 1.],[80., 80., 1.]]
+    t = [0., 60.] * time_multiplier
+    period = Int(round(20 / 60 * n))
+    
+    B_traj = make_linear_trajectory(pts, t, n, disturbance=dist)
+    for i in 1:n
+        B_traj.r[i][zi] = 1 + sin(i / period * 2 * π)
+    end
+    return B_traj
 end

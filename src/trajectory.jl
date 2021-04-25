@@ -11,9 +11,10 @@ r  : array of array containing the system state a each timestep
 n  : number of points
 """
 struct trajectory
-    dt
-    r
-    n
+    dt::Real
+    r::Array{Array{Real,1},1}
+    n::Int
+    disturbance::Array{Real,2} # matrix n x 3 with Dx, Dy and Dz for each timestep in Newtons
 end
 
 function Base.show(io::IO, traj::trajectory)
@@ -40,7 +41,13 @@ n       : number of system states in the final discretized trajectory. Note: the
 """
 function make_linear_trajectory(points::Array{Array{Float64,1},1}, 
                                 time::Array{Float64,1}, 
-                                n::Integer)
+                                n::Integer;
+                                disturbance=nothing)
+
+    if disturbance === nothing
+        disturbance = zeros(n, 3)
+    end
+
     for point in points
         @assert(length(point) == 3)
     end
@@ -77,12 +84,7 @@ function make_linear_trajectory(points::Array{Array{Float64,1},1},
     r[n] = zeros(nx)
     r[n][[xi,yi,zi]] = last(points)
 
-    # # add gravity
-    # for state in r
-    #     state[dzi] += g
-    # end
-
-    return trajectory(dt, r, n)
+    return trajectory(dt, r, n, disturbance)
 end
 
 function sol_2_trajectory(sol::GenericExecutionStats, target_trajectory::trajectory)
@@ -99,14 +101,14 @@ function sol_2_trajectory(sol::GenericExecutionStats, target_trajectory::traject
     for i in 2:(n)
         r_opt[i] = x_sol[(i - 2) * nx + 1:(i - 1) * nx ]
     end
-    traj_opt = trajectory(dt, r_opt, n)
+    traj_opt = trajectory(dt, r_opt, n, target_trajectory.disturbance)
 
     r_sim = Array{Array{Float64,1},1}(undef, n) # non-linear solution
     r_sim[1] = r1
     for i in 2:(n)
         r_sim[i] = NonLinearOutput(u_sol[(i - 2) * nu + 1:(i - 1) * nu ], r_sim[i - 1], dt)
     end
-    traj_sim = trajectory(dt, r_sim, n)
+    traj_sim = trajectory(dt, r_sim, n, target_trajectory.disturbance)
 
     return traj_opt, traj_sim
 end
