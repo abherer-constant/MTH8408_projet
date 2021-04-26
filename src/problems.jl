@@ -39,7 +39,7 @@ function generate_problem(traj_ID::String; n::Int=1000, disturbed::Bool=false, t
     if disturbed
         dist = generate_disturbance(n)
     else
-        dist = zeros(n, 3)
+        dist = zeros(n-1, 3)
     end
     
     if traj_ID == "A"

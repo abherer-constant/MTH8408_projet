@@ -145,7 +145,7 @@ function all_at_once_RipQP(traj)
 
     QM = QuadraticModel(-g_vec, H, A=A_qm, lcon=L_qm, ucon=L_qm, name="QM")
     
-    stats = ripqp(QM, display=false)
+    stats = ripqp(QM)
     stats.solution = gen_sol(stats.solution)
     stats.solver_specific[:dt] = traj.dt
     stats.solver_specific[:n] = traj.n 

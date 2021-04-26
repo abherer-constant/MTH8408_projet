@@ -14,7 +14,7 @@ function dummynlp()
 end
 
 function LQT_D(traj::trajectory)
-    Dxyz = transpose(traj.disturbance)
+    Dxyz = transpose(vcat([0,0,0]',traj.disturbance))
     h = traj.dt
     r_ini = traj.r
     kf = length(r_ini)
