@@ -60,12 +60,15 @@ function make_linear_trajectory(points::Array{Array{Float64,1},1},
     time_total = last(time)
     dt = time_total / (n - 1)
     segment_n = Array{Integer,1}(undef, length(time) - 1)
-    for i in 2:length(time)
-        segment_time = time[i] - time[i - 1]
+    
+    lapsed_time = 0
+    for i in 2:length(time)   
+        segment_time = time[i] - lapsed_time
         segment_n[i - 1] = round(segment_time / time_total * (n - 1))
+        lapsed_time += segment_n[i - 1] * dt
     end
 
-    n = sum(segment_n) + 1
+    @assert(sum(segment_n) + 1 == n)
     r = Array{Array{Float64,1},1}(undef, n)
     ri = 1
     for i in 2:length(points)
