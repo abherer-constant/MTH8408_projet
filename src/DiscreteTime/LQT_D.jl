@@ -91,14 +91,20 @@ function LQT_D(traj::trajectory)
 
     g = g[kf:-1:1]
     P = P[kf:-1:1]
-
+    
+    sol = zeros((kf-1)*(nx+nu))
+    len_x = nx*(kf-1)
     for k in 1:kf - 1
         X_star[1:12 , k + 1] = (Ad - Bd * L[k]) * X_star[1:12, k] + Bd * Lg[k] * g[k + 1] + D[:, k] / m * h; # - gravity * h);
+        sol[(k-1)*nx+1:k*nx] = X_star[1:12 , k + 1]
         U_star[1:4,  k] = - L[k] * X_star[1:12, k] + Lg[k] * g[k + 1] ;
+        sol[len_x+(k-1)*nu+1:len_x+k*nu] = U_star[1:4,  k]
     end
 
-    sol = [[X_star];[U_star]]
+    # sol = vcat(X_star, U_star)
     
+
+
     nlp = dummynlp()
     stats = ipopt(nlp, print_level=0)
     stats.solution = sol
